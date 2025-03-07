@@ -1,0 +1,63 @@
+#include "../include/constants.h"
+#include "../include/node.h"
+#include "../include/dictionary.h"
+#include "../include/evaluator.h"
+#include "../include/parser.h"
+#include "../include/tokenizer.h"
+#include  "../include/eval.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+dictionary* get_default_dictionary() 
+{
+    static dictionary* default_dict = NULL;
+
+    if (default_dict == NULL) 
+    {
+        default_dict = new_dict(1);
+    }
+    return default_dict;
+}
+
+
+eval_result eval(const char* expression)
+{
+
+  dictionary *dict = get_default_dictionary();
+  token_vec *v = tokenize(expression);
+  expression_info e = valid_expression(v);
+  int error_ptr = e.error_at;
+  
+  if (!e.is_valid)
+  {
+      free_token_vec(v);
+      return (eval_result) {0.0, true, error_ptr, false, ""};
+  }
+
+  if (e.is_function_declaration)
+  {
+      entry *et = parse_function_declaration(v);
+      dict = add_function(dict, et);
+      free(et);
+      free_token_vec(v);
+      return (eval_result) {1.0, false, 0, false, ""};
+  }
+
+  node *root = compute_expression(v);
+
+  if (root == NULL)
+  {
+    free_token_vec(v);
+    return (eval_result) {0.0, true, 0, true, "Error: Failed to parse expression"};
+  }
+  else
+  {
+      eval_result result = evaluate_expression(root, dict);
+      free_token_vec(v);
+      free_tree(root);
+      return result;
+  }
+
+}
