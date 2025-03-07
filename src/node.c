@@ -29,24 +29,6 @@ void free_tree(node *root)
     free(root);
 }
 
-// typedef struct node
-//{
-//   char *op;
-//   double value;
-//   char *name;
-//   enum node_type type;
-//   struct node *left, *right;
-//   struct parsed_function_info *function;
-// } node;
-//
-//
-// struct parsed_function_info{
-//
-//   char *name;
-//   node **args;
-//   int num_args;
-//
-// };
 node *new_unary_op_node(char *op, node *l)
 {
     node *n = malloc(sizeof(node));
