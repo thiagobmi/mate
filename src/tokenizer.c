@@ -11,8 +11,6 @@ operator_info operators[] = {
     {"=", 0, false, false},
     {"||", 10, false, false}, // Logical OR (lowest precedence)
     {"&&", 20, false, false}, // Logical AND
-    {"|", 30, false, false},  // Bitwise OR
-    //{"^", 40, false, false},   // Bitwise XOR
     {"&", 50, false, false},  // Bitwise AND
     {"==", 60, false, false}, // Equality
     {"!=", 60, false, false}, // Inequality
@@ -64,10 +62,6 @@ bool can_be_unary(char c)
 }
 bool is_operator(char c)
 {
-
-    // return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c ==
-    // '=' || c == '>' || c == '<' || c == '!' || c == '&';
-    //
     for (int i = 0; i < NUM_OPERATORS; i++)
     {
         if (strlen(operators[i].op) == 1 && operators[i].op[0] == c)
@@ -90,14 +84,6 @@ bool is_comma(char c) { return c == ','; }
 
 bool is_multi_char_operator(char c1, char c2)
 {
-
-    // return (c1 == '=' && c2 == '=') ||  // ==
-    //       (c1 == '>' && c2 == '=') ||  // >=
-    //       (c1 == '<' && c2 == '=') ||  // <=
-    //       (c1 == '!' && c2 == '=') ||  // !=
-    //       (c1 == '&' && c2 == '&') ||  // &&
-    //       (c1 == '|' && c2 == '|');    // ||
-
     for (int i = 0; i < NUM_OPERATORS; i++)
     {
         if (strlen(operators[i].op) == 2)
