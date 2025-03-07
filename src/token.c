@@ -43,11 +43,10 @@ token_vec *new_token_vec(int max_size)
 
 token get_current_token(token_vec *v)
 {
-  if(v->cur_parsing > v->len)
-    return (token) {"",UNDEFINED};
+    if (v->cur_parsing > v->len)
+        return (token){"", UNDEFINED};
 
-  return v->tokens[v->cur_parsing];
-
+    return v->tokens[v->cur_parsing];
 }
 
 token_vec *resize_token_vec(token_vec *v, int new_size)

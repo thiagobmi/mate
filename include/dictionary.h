@@ -1,8 +1,6 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 
-#include "node.h"
-
 typedef enum entry_type
 {
     VARIABLE,

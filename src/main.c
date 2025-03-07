@@ -1,9 +1,9 @@
 #include "../include/constants.h"
 #include "../include/dictionary.h"
+#include "../include/eval.h"
 #include "../include/evaluator.h"
 #include "../include/parser.h"
 #include "../include/tokenizer.h"
-#include "../include/eval.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -41,19 +41,19 @@ void redrawLine(const char *buffer, int cursor_pos)
 
 void print_result(double result)
 {
-  char str[51];
-  snprintf(str, 50, "%.15lf", result);
+    char str[51];
+    snprintf(str, 50, "%.15lf", result);
 
-  int index = strlen(str) - 1;
+    int index = strlen(str) - 1;
 
-  while (str[index] == '0')
-      index--;
+    while (str[index] == '0')
+        index--;
 
-  if (str[index] == '.')
-      index--;
+    if (str[index] == '.')
+        index--;
 
-  for (int i = 0; i <= index; i++)
-      printf("%c", str[i]);
+    for (int i = 0; i <= index; i++)
+        printf("%c", str[i]);
 }
 
 char **history_alloc(int num)
@@ -79,7 +79,6 @@ void free_history(char **history, int len)
 
     for (int i = 0; i < len; i++)
         free(history[i]);
-
     free(history);
 }
 
@@ -255,8 +254,7 @@ int start_calculator()
                     redrawLine(buffer, cursor_pos);
                     continue;
                 }
-
-                if (e.is_function_declaration)
+                else if (e.is_function_declaration)
                 {
                     entry *et = parse_function_declaration(v);
                     d = add_function(d, et);
@@ -290,10 +288,10 @@ int start_calculator()
                     }
                     else
                     {
+                        printf("\n ");
                         print_result(result.value);
                         printf("\n");
                     }
-
                     free_tree(root);
                 }
 
@@ -328,33 +326,47 @@ int start_calculator()
 int main(int argc, char **argv)
 {
 
-  //run_tests();
+    // run_tests();
 
-  if (argc == 2)
-  {
-      eval_result ex = eval(argv[1]);
-
-      if(ex.error)
-      {
-        if(strlen(ex.error_msg) > 0){
-          printf("%s\n",ex.error_msg);
-        }
-        else
+    char *token;
+    if (argc == 2)
+    {
+        token = strtok(argv[1], ";");
+        do
         {
-          printf("Error at: %d\n",ex.error_at);
-        }
-      }
-      else
-      {
-        printf("     ");
-        print_result(ex.value);
-        printf("\n");
-      }
-  }
-  else
-  {
-      start_calculator();
-  }
+            eval_result ex = eval(token);
 
-  return 0;
+            if (ex.error)
+            {
+                if (strlen(ex.error_msg) > 0)
+                {
+                    printf("%s\n", ex.error_msg);
+                }
+                else
+                {
+                    printf("Error at: %d\n", ex.error_at);
+                }
+                mate_cleanup();
+                return 1;
+            }
+            else if (!ex.is_assignment)
+            {
+                printf("     ");
+                print_result(ex.value);
+                printf("\n");
+            }
+        } while ((token = strtok(NULL, ";")));
+        mate_cleanup();
+    }
+    else if (argc > 2)
+    {
+        printf("\t Usage: %s <expr>\n", argv[0]);
+        printf("\t or %s\n", argv[0]);
+        return 1;
+    }
+    else
+    {
+        start_calculator();
+    }
+    return 0;
 }

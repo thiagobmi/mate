@@ -1,16 +1,15 @@
-#include "../include/tokenizer.h"
 #include "../include/parser.h"
+#include "../include/tokenizer.h"
 #include <assert.h>
 #include <stdio.h>
 
 void test_expression(const char *s, int expected)
 {
-
     token_vec *v = tokenize(s);
     assert(v != NULL);
     int valid = valid_expression(v).is_valid;
 
-    //printf("[%s]: %s\n", valid ? "VALID" : "INVALID", s);
+    // printf("[%s]: %s\n", valid ? "VALID" : "INVALID", s);
 
     assert(valid == expected);
     free_token_vec(v);
@@ -36,4 +35,3 @@ void run_tests()
     test_expression("*/2", 0);     // Invalid operator sequence
     test_expression("", 0);
 }
-

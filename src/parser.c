@@ -13,7 +13,7 @@ bool match(token_vec *v, token_type t)
     if (v->cur_parsing >= v->len)
         return false;
 
-    token tk = get_current_token(v); 
+    token tk = get_current_token(v);
     if (tk.type == t)
     {
         v->cur_parsing++;
@@ -338,7 +338,6 @@ expression_info valid_expression(token_vec *v)
     return (expression_info){0, 0, 0, 0};
 }
 
-
 node *compute_expression_by_prec(token_vec *v, int min_prec)
 {
     node *left = parse_factor(v);
@@ -408,8 +407,7 @@ token_vec *get_function(token_vec *v)
         if (v->cur_parsing > v->len)
             break;
 
-
-        token tk = get_current_token(v); 
+        token tk = get_current_token(v);
 
         add_token(func, strdup(tk.value), tk.type);
 
@@ -444,7 +442,7 @@ entry *parse_function_declaration(token_vec *v)
     int count_args = 0;
     dictionary *d = new_dict(1);
 
-    token tk = get_current_token(v); 
+    token tk = get_current_token(v);
 
     if (!match(v, IDENTIFIER))
         return NULL;
@@ -453,14 +451,14 @@ entry *parse_function_declaration(token_vec *v)
     if (!match(v, OPEN_PARENTHESIS))
         return NULL;
 
-    tk = get_current_token(v); 
+    tk = get_current_token(v);
 
     while (match(v, IDENTIFIER))
     {
         add_entry(d, strdup(tk.value), 0.0);
         count_args++;
         match(v, COMMA);
-        tk = get_current_token(v); 
+        tk = get_current_token(v);
     }
 
     if (!match(v, CLOSE_PARENTHESIS))
@@ -470,7 +468,7 @@ entry *parse_function_declaration(token_vec *v)
 
     while (v->cur_parsing < v->len)
     {
-        token tk = get_current_token(v); 
+        token tk = get_current_token(v);
 
         add_token(e, strdup(tk.value), tk.type);
         v->cur_parsing++;
@@ -607,7 +605,7 @@ struct function_info *get_function_arguments(token_vec *v)
 
     while (v->cur_parsing < v->len)
     {
-        token tk = get_current_token(v); 
+        token tk = get_current_token(v);
 
         switch (state)
         {
