@@ -4,8 +4,15 @@
 typedef enum entry_type
 {
     VARIABLE,
-    FUNCTION
+    FUNCTION,
+    EXTERN_FUNCTION
 } entry_type;
+
+struct extern_function_info
+{
+  int num_args;
+  void *function;
+};
 
 typedef struct entry
 {
@@ -13,7 +20,7 @@ typedef struct entry
     double value;
     entry_type type;
     struct stored_function_info *function;
-
+    struct extern_function_info *external_function;
 } entry;
 
 typedef struct dict
@@ -23,8 +30,9 @@ typedef struct dict
     entry *entries;
 } dictionary;
 
+
 void free_entry(entry et);
-dictionary *add_function(dictionary *d, entry *et);
+dictionary *dictionary_add_function(dictionary *d, entry *et);
 dictionary *new_dict(int max_size);
 dictionary *resize_dict(dictionary *d, int new_size);
 dictionary *add_entry(dictionary *d, char *k, double v);

@@ -15,9 +15,9 @@ dictionary *new_dict(int max_size)
 
     return d;
 }
-dictionary *add_function(dictionary *d, entry *et)
-{
 
+dictionary *dictionary_add_function(dictionary *d, entry *et)
+{
     int index = d->len;
 
     if (d->len >= d->max_size - 1)
@@ -34,8 +34,18 @@ dictionary *add_function(dictionary *d, entry *et)
     }
 
     d->entries[index].key = et->key;
-    d->entries[index].type = FUNCTION;
-    d->entries[index].function = et->function;
+
+    if (et->type == FUNCTION)
+    {
+
+        d->entries[index].type = FUNCTION;
+        d->entries[index].function = et->function;
+    }
+    else if (et->type == EXTERN_FUNCTION)
+    {
+        d->entries[index].type = EXTERN_FUNCTION;
+        d->entries[index].external_function = et->external_function;
+    }
 
     if (id == -1)
         d->len++;

@@ -9,7 +9,7 @@ enum node_type
     OPERATOR_NODE,
     IDENTIFIER_NODE,
     UNARY_OPERATOR_NODE,
-    FUNCTION_NODE
+    FUNCTION_NODE,
 };
 
 typedef struct node
@@ -24,7 +24,6 @@ typedef struct node
 
 struct parsed_function_info
 {
-
     char *name;
     node **args;
     int num_args;

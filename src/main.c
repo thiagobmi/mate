@@ -257,7 +257,7 @@ int start_calculator()
                 else if (e.is_function_declaration)
                 {
                     entry *et = parse_function_declaration(v);
-                    d = add_function(d, et);
+                    d = dictionary_add_function(d, et);
                     free(et);
                     memset(buffer, 0, BUFFER_SIZE);
                     cursor_pos = 0;
@@ -323,12 +323,15 @@ int start_calculator()
     return 0;
 }
 
+double sum(double a, double b, double c) { return a + b + c; }
+
 int main(int argc, char **argv)
 {
 
     // run_tests();
 
     char *token;
+    add_function("sum",sum,3);
     if (argc == 2)
     {
         token = strtok(argv[1], ";");

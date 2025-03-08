@@ -31,6 +31,21 @@ void mate_cleanup()
     }
 }
 
+void add_function(char *name, void *function, int num_args)
+{
+
+    dictionary *dict = get_default_dictionary();
+    entry *et = malloc(sizeof(entry));
+    struct extern_function_info *ext= malloc(sizeof(struct extern_function_info));
+    ext->function = function;
+    ext->num_args = num_args;
+    et->external_function = ext;
+    et->key = strdup(name);
+    et->type = EXTERN_FUNCTION;
+    dictionary_add_function(dict,et);
+
+}
+
 eval_result eval(const char *expression)
 {
 
@@ -48,7 +63,7 @@ eval_result eval(const char *expression)
     if (e.is_function_declaration)
     {
         entry *et = parse_function_declaration(v);
-        dict = add_function(dict, et);
+        dict = dictionary_add_function(dict, et);
         free(et);
         free_token_vec(v);
         return (eval_result){1.0, false, 0, true, ""};

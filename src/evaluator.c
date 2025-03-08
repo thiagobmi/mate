@@ -1,12 +1,39 @@
 #include "../include/evaluator.h"
 #include "../include/parser.h"
 #include "../include/token.h"
+#include <ffi.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+
 double token_to_number(token t) { return atof(t.value); }
+
+double call_extern_function(struct extern_function_info *info,
+                            const double *args)
+{
+    ffi_cif cif;
+    ffi_type *arg_types[info->num_args];
+    void *arg_values[info->num_args];
+
+    for (int i = 0; i < info->num_args; i++)
+    {
+        arg_types[i] = &ffi_type_double;
+        arg_values[i] = (void *)&args[i];
+    }
+
+    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, info->num_args, &ffi_type_double,
+                     arg_types) != FFI_OK)
+    {
+        fprintf(stderr, "ffi_prep_cif failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    double result;
+    ffi_call(&cif, FFI_FN(info->function), &result, arg_values);
+    return result;
+}
 
 eval_result evaluate_expression(node *n, dictionary *d)
 {
@@ -33,7 +60,8 @@ eval_result evaluate_expression(node *n, dictionary *d)
         }
         else
         {
-            if (d->entries[id].type != FUNCTION)
+            if (d->entries[id].type != FUNCTION &&
+                d->entries[id].type != EXTERN_FUNCTION)
             {
                 result.error = true;
                 result.value = 0.0;
@@ -41,40 +69,81 @@ eval_result evaluate_expression(node *n, dictionary *d)
                         fn->name);
                 return result;
             }
-            struct stored_function_info *stored_func = d->entries[id].function;
-            dictionary *arg_dict = stored_func->args;
 
-            if (fn->num_args != stored_func->num_args)
+            if (d->entries[id].type == FUNCTION)
             {
-                result.error = true;
-                result.value = 0.0;
-                sprintf(result.error_msg, "Wrong number of arguments for %s",
-                        fn->name);
-                return result;
-            }
+                struct stored_function_info *stored_func =
+                    d->entries[id].function;
+                dictionary *arg_dict = stored_func->args;
 
-            for (int i = 0; i < arg_dict->len; i++)
-            {
-                eval_result res = evaluate_expression(fn->args[i], d);
-                if (!res.error)
-                {
-                    arg_dict->entries[i].value = res.value;
-                }
-                else
+                if (fn->num_args != stored_func->num_args)
                 {
                     result.error = true;
-                    strcpy(result.error_msg, res.error_msg);
                     result.value = 0.0;
+                    sprintf(result.error_msg,
+                            "Wrong number of arguments for %s", fn->name);
                     return result;
                 }
+
+                for (int i = 0; i < arg_dict->len; i++)
+                {
+                    eval_result res = evaluate_expression(fn->args[i], d);
+                    if (!res.error)
+                    {
+                        arg_dict->entries[i].value = res.value;
+                    }
+                    else
+                    {
+                        result.error = true;
+                        strcpy(result.error_msg, res.error_msg);
+                        result.value = 0.0;
+                        return result;
+                    }
+                }
+
+                eval_result ev =
+                    evaluate_expression(stored_func->ast, arg_dict);
+
+                if (ev.error && strlen(ev.error_msg) > 0)
+                    printf("\n Error: %s\n", ev.error_msg);
+
+                return ev;
             }
+            else if (d->entries[id].type == EXTERN_FUNCTION)
+            {
+                struct extern_function_info *ext =
+                    d->entries[id].external_function;
 
-            eval_result ev = evaluate_expression(stored_func->ast, arg_dict);
+                if (fn->num_args != ext->num_args)
+                {
+                    result.error = true;
+                    result.value = 0.0;
+                    sprintf(result.error_msg,
+                            "Wrong number of arguments for %s", fn->name);
+                    return result;
+                }
 
-            if (ev.error && strlen(ev.error_msg) > 0)
-                printf("\n Error: %s\n", ev.error_msg);
+                double *arguments = malloc(sizeof(double) * ext->num_args);
+                for (int i = 0; i < ext->num_args; i++)
+                {
+                    eval_result res = evaluate_expression(fn->args[i], d);
+                    if (!res.error)
+                    {
+                        arguments[i] = res.value;
+                    }
+                    else
+                    {
+                        result.error = true;
+                        strcpy(result.error_msg, res.error_msg);
+                        result.value = 0.0;
+                        return result;
+                    }
+                }
 
-            return ev;
+                double sum_result = call_extern_function(ext, arguments);
+                printf("\n\nRESULT: %lf\n\n", sum_result);
+                exit(1);
+            }
         }
     }
 

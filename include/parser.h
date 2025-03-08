@@ -33,7 +33,6 @@ enum func_state
 
 struct function_info
 {
-
     char *name;
     token_vec **args;
     int num_args;
@@ -45,6 +44,7 @@ struct stored_function_info
     int num_args;
     node *ast;
 };
+
 
 struct function_info *get_function_arguments(token_vec *v);
 
