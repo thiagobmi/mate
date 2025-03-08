@@ -140,9 +140,8 @@ eval_result evaluate_expression(node *n, dictionary *d)
                     }
                 }
 
-                double sum_result = call_extern_function(ext, arguments);
-                printf("\n\nRESULT: %lf\n\n", sum_result);
-                exit(1);
+                double result = call_extern_function(ext, arguments);
+                return (eval_result) {result,false,0,false,""};
             }
         }
     }

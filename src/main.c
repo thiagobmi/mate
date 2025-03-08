@@ -11,6 +11,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <math.h>
 
 struct termios orig_termios;
 
@@ -323,15 +324,16 @@ int start_calculator()
     return 0;
 }
 
-double sum(double a, double b, double c) { return a + b + c; }
-
 int main(int argc, char **argv)
 {
 
     // run_tests();
 
     char *token;
-    add_function("sum",sum,3);
+    add_function("sin", sin, 1);
+    add_function("cos", cos, 1);
+    add_function("tan", tan, 1);
+
     if (argc == 2)
     {
         token = strtok(argv[1], ";");
