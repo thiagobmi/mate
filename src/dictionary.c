@@ -98,6 +98,8 @@ void free_entry(entry et)
         free_tree(fn->ast);
         free(fn);
     }
+    else if (et.type == EXTERN_FUNCTION)
+      free(et.external_function); 
 }
 
 void free_dict(dictionary *d)

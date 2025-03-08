@@ -43,6 +43,7 @@ void add_function(char *name, void *function, int num_args)
     et->key = strdup(name);
     et->type = EXTERN_FUNCTION;
     dictionary_add_function(dict,et);
+    free(et);
 
 }
 

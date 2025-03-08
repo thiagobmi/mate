@@ -141,6 +141,7 @@ eval_result evaluate_expression(node *n, dictionary *d)
                 }
 
                 double result = call_extern_function(ext, arguments);
+                free(arguments);
                 return (eval_result) {result,false,0,false,""};
             }
         }
