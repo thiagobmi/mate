@@ -400,7 +400,23 @@ int main(int argc, char **argv)
     add_function("cos", cos, 1);
     add_function("tan", tan, 1);
 
-    load_mateconfig(".mateconfig");
+    char *config_file = ".mateconfig";
+    
+    // Processamento de argumentos
+    if (argc > 1) {
+        if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--config") == 0) {
+            if (argc > 2) {
+                config_file = argv[2];
+                argc -= 2;
+                argv += 2;
+            } else {
+                printf("Erro: Nome do arquivo de configuração não fornecido após %s\n", argv[1]);
+                return 1;
+            }
+        }
+    }
+
+    load_mateconfig(config_file);
 
     if (argc == 2)
     {
@@ -453,8 +469,11 @@ int main(int argc, char **argv)
     }
     else if (argc > 2)
     {
-        printf("\t Usage: %s <expr>\n", argv[0]);
-        printf("\t or %s\n", argv[0]);
+        printf("\t Usage: %s [opcoes] <expr>\n", argv[0]);
+        printf("\t   ou: %s [opcoes]\n", argv[0]);
+        printf("\n");
+        printf("\t Opcoes:\n");
+        printf("\t   -c, --config ARQUIVO   Usar ARQUIVO como configuração (padrão: .mateconfig)\n");
         return 1;
     }
     else
