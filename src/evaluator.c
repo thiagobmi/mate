@@ -77,7 +77,8 @@ eval_result evaluate_expression(node *n, dictionary *d)
                 struct stored_function_info *stored_func =
                     d->entries[id].function;
                 dictionary *arg_dict = stored_func->args;
-
+                
+                
                 if (fn->num_args != stored_func->num_args)
                 {
                     result.error = true;

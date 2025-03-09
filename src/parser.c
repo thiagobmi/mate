@@ -192,7 +192,8 @@ expression_info valid_expression(token_vec *v)
                     {
                         if (strcmp(current_token.value, function_name) == 0)
                             state = EXPR_ERROR;
-                        state = EXPR_LITERAL_OR_IDENTIFIER;
+                        else
+                            state = EXPR_LITERAL_OR_IDENTIFIER;
                     }
                 }
                 else
@@ -311,7 +312,8 @@ expression_info valid_expression(token_vec *v)
                     {
                         if (strcmp(current_token.value, function_name) == 0)
                             state = EXPR_ERROR;
-                        state = EXPR_LITERAL_OR_IDENTIFIER;
+                        else
+                            state = EXPR_LITERAL_OR_IDENTIFIER;
                     }
                 }
                 else
@@ -505,6 +507,7 @@ entry *parse_function_declaration(token_vec *v)
     entry *et = malloc(sizeof(entry));
     struct stored_function_info *func =
         malloc(sizeof(struct stored_function_info));
+    
     node *root = compute_expression(e);
     free_token_vec(e);
 
