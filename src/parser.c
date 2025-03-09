@@ -17,7 +17,6 @@ bool match(token_vec *v, token_type t)
     token tk = get_current_token(v);
     if (tk.type == t)
     {
-        // print_token(tk);
         v->cur_parsing++;
         return true;
     }
@@ -50,7 +49,8 @@ expression_info valid_expression(token_vec *v)
     dictionary *d = new_dict(1);
     dictionary *default_dict = get_default_dictionary();
 
-    // TODO: Add support for nested functions in arguments;
+    int function_paren_depth = 0;
+
     while (true)
     {
         token current_token = get_current_token(v);
@@ -64,6 +64,7 @@ expression_info valid_expression(token_vec *v)
             else if (match(v, CLOSE_PARENTHESIS))
             {
                 state = EXPR_FUNCTION_CLOSE_PARENTHESIS;
+                function_paren_depth--;
             }
             else
             {
@@ -95,6 +96,7 @@ expression_info valid_expression(token_vec *v)
             break;
 
         case EXPR_FUNCTION_PARENTHESIS:
+            function_paren_depth++;
             is_function_declaration =
                 vec_contains_assignment(v) && !assignment ? true : false;
             is_function_call = (!is_function_declaration) || declared_function;
@@ -133,16 +135,28 @@ expression_info valid_expression(token_vec *v)
                 {
                     state = EXPR_START;
                 }
+                else
+                {
+                    state = EXPR_ERROR;
+                    continue;
+                }
             }
             else if (match(v, OPEN_PARENTHESIS))
             {
                 if (is_function_call)
                 {
+                    count_brackets++;
                     state = EXPR_PARENTHESIS;
+                }
+                else
+                {
+                    state = EXPR_ERROR;
+                    continue;
                 }
             }
             else if (match(v, CLOSE_PARENTHESIS))
             {
+                function_paren_depth--;
                 state = EXPR_FUNCTION_CLOSE_PARENTHESIS;
             }
             else
@@ -161,15 +175,25 @@ expression_info valid_expression(token_vec *v)
                     state = EXPR_START;
                 }
                 else
+                {
                     state = EXPR_ERROR;
+                }
+                continue;
+            }
+            else if (match(v, OPEN_PARENTHESIS))
+            {
+                state = EXPR_FUNCTION_PARENTHESIS;
                 continue;
             }
             else
             {
-                if (is_function_call)
-                    state = EXPR_DONE;
+                if (is_function_call){
+                    state = EXPR_LITERAL_OR_IDENTIFIER;
+                }
                 else
+                {
                     state = EXPR_ERROR;
+                }
                 continue;
             }
             break;
@@ -208,6 +232,7 @@ expression_info valid_expression(token_vec *v)
             }
             else if (match(v, OPEN_PARENTHESIS))
             {
+                count_brackets++;
                 state = EXPR_PARENTHESIS;
             }
             else if (match(v, UNARY_OPERATOR))
@@ -229,7 +254,9 @@ expression_info valid_expression(token_vec *v)
             }
             else if (match(v, COMMA))
             {
-                if (count_brackets == 0)
+                if (count_brackets == 0 && function_paren_depth == 0)
+                    state = EXPR_START;
+                else if (function_paren_depth > 0)
                     state = EXPR_START;
                 else
                     state = EXPR_ERROR;
@@ -249,26 +276,20 @@ expression_info valid_expression(token_vec *v)
             }
             else if (match(v, CLOSE_PARENTHESIS))
             {
-                if (count_brackets == 0)
-                {
-                    if (is_function_call)
-                    {
-                        if (v->cur_parsing >= v->len)
-                        {
-                            state = EXPR_DONE;
-                        }
-                        else
-                        {
-                            is_function_call = false;
-                            state = EXPR_LITERAL_OR_IDENTIFIER;
-                        }
-                    }
-                    continue;
-                }
-                else
+                if (count_brackets > 0)
                 {
                     count_brackets--;
                     state = EXPR_LITERAL_OR_IDENTIFIER;
+                }
+                else if (function_paren_depth > 0)
+                {
+                    function_paren_depth--;
+                    state = EXPR_FUNCTION_CLOSE_PARENTHESIS;
+                }
+                else
+                {
+                    state = EXPR_ERROR;
+                    continue;
                 }
             }
             else if (match(v, OPEN_PARENTHESIS))
@@ -277,7 +298,7 @@ expression_info valid_expression(token_vec *v)
             }
             else if (v->cur_parsing >= v->len)
             {
-                if (count_brackets == 0 && !is_function_call)
+                if (count_brackets == 0 && function_paren_depth == 0)
                 {
                     state = EXPR_DONE;
                     break;
@@ -325,6 +346,7 @@ expression_info valid_expression(token_vec *v)
             }
             else if (match(v, OPEN_PARENTHESIS))
             {
+                count_brackets++;
                 state = EXPR_PARENTHESIS;
             }
             else if (match(v, UNARY_OPERATOR))
@@ -339,17 +361,35 @@ expression_info valid_expression(token_vec *v)
             break;
 
         case EXPR_PARENTHESIS:
-            count_brackets++;
-            state = EXPR_START;
+            if (match(v, IDENTIFIER) || match(v, LITERAL) || 
+                match(v, OPEN_PARENTHESIS) || match(v, UNARY_OPERATOR))
+            {
+                v->cur_parsing--;
+                state = EXPR_START;
+            }
+            else
+            {
+                state = EXPR_ERROR;
+                continue;
+            }
             break;
 
         case EXPR_DONE:
+            if (count_brackets != 0 || function_paren_depth != 0) {
+                free_dict(d);
+                e.is_valid = false;
+                e.error_at = v->cur_parsing;
+                v->cur_parsing = 0;
+                e.is_assignment = assignment;
+                e.is_function_declaration = is_function_declaration || declared_function;
+                return e;
+            }
+            
             free_dict(d);
             v->cur_parsing = 0;
             e.is_valid = true;
             e.is_assignment = assignment;
-            e.is_function_declaration =
-                is_function_declaration || declared_function;
+            e.is_function_declaration = is_function_declaration || declared_function;
             return e;
             break;
 
@@ -359,8 +399,7 @@ expression_info valid_expression(token_vec *v)
             e.error_at = v->cur_parsing;
             v->cur_parsing = 0;
             e.is_assignment = assignment;
-            e.is_function_declaration =
-                is_function_declaration || declared_function;
+            e.is_function_declaration = is_function_declaration || declared_function;
             return e;
             break;
         }
@@ -554,6 +593,10 @@ node *parse_factor(token_vec *v)
     {
         token_vec *func = get_function(v);
         struct function_info *f = get_function_arguments(func);
+        if(f == NULL) {
+            printf("\nErro: Função inválida\n");
+            exit(1);
+        }
         struct parsed_function_info *p = parse_function(f);
 
         if (func != NULL)
@@ -624,116 +667,119 @@ node *parse_factor(token_vec *v)
     return n;
 }
 
-struct function_info *get_function_arguments(token_vec *v)
-{
+struct function_info *get_function_arguments(token_vec *v) {
     enum func_state state = FUNC_START;
-    int count_brackets = 0;
-
+    int paren_depth = 0;
+    
     struct function_info *f = malloc(sizeof(struct function_info));
     f->args = NULL;
     f->num_args = 0;
-    token_vec *a = NULL;
-
-    while (v->cur_parsing < v->len)
-    {
+    token_vec *current_arg = NULL;
+    
+    while (v->cur_parsing < v->len) {
         token tk = get_current_token(v);
-
-        switch (state)
-        {
-        case FUNC_START:
-            if (match(v, IDENTIFIER))
-            {
-                f->name = strdup(tk.value);
-                state = FUNC_NAME;
-                continue;
-            }
-            else
-                state = FUNC_ERROR;
-            break;
-
-        case FUNC_NAME:
-            if (match(v, OPEN_PARENTHESIS))
-            {
-                state = FUNC_PAREN;
-            }
-            else
-                state = FUNC_ERROR;
-            break;
-
-        case FUNC_PAREN:
-            if (match(v, CLOSE_PARENTHESIS))
-            {
-                v->cur_parsing = 0;
-                f->num_args = 0;
-                state = FUNC_DONE;
-            }
-            else
-            {
-                state = FUNC_ARG;
-            }
-            break;
-
-        case FUNC_ARG:
-            if (f->num_args == 0)
-            {
-                a = new_token_vec(1);
-                f->args = malloc(sizeof(token_vec *));
-                f->args[0] = a;
-                f->num_args++;
-            }
-            else
-            {
-                a = new_token_vec(1);
-                f->num_args++;
-                f->args = realloc(f->args, sizeof(token_vec *) * f->num_args);
-                f->args[f->num_args - 1] = a;
-            }
-            state = FUNC_ACCEPT;
-            break;
-
-        case FUNC_ACCEPT:
-            if (match(v, IDENTIFIER) || match(v, UNARY_OPERATOR) ||
-                match(v, OPERATOR) || match(v, LITERAL))
-            {
-                a = add_token(a, strdup(tk.value), tk.type);
-            }
-            else if (match(v, COMMA))
-            {
-                state = FUNC_ARG;
-            }
-            else if (match(v, OPEN_PARENTHESIS))
-            {
-                count_brackets++;
-                a = add_token(a, strdup(tk.value), tk.type);
-            }
-            else if (match(v, CLOSE_PARENTHESIS))
-            {
-                if (count_brackets == 0)
-                {
+        
+        switch (state) {
+            case FUNC_START:
+                if (match(v, IDENTIFIER)) {
+                    f->name = strdup(tk.value);
+                    state = FUNC_NAME;
+                    continue;
+                } else {
+                    state = FUNC_ERROR;
+                }
+                break;
+                
+            case FUNC_NAME:
+                if (match(v, OPEN_PARENTHESIS)) {
+                    paren_depth = 1;
+                    state = FUNC_PAREN;
+                } else {
+                    state = FUNC_ERROR;
+                }
+                break;
+                
+            case FUNC_PAREN:
+                if (match(v, CLOSE_PARENTHESIS)) {
+                    paren_depth--;
                     v->cur_parsing = 0;
                     state = FUNC_DONE;
-                    return f;
+                } else {
+                    state = FUNC_ARG;
+                    continue;
                 }
-                else
-                {
-                    count_brackets--;
-                    a = add_token(a, strdup(tk.value), tk.type);
+                break;
+                
+            case FUNC_ARG:
+                current_arg = new_token_vec(1);
+                f->num_args++;
+                f->args = realloc(f->args, sizeof(token_vec *) * f->num_args);
+                f->args[f->num_args - 1] = current_arg;
+                state = FUNC_ACCEPT;
+                continue;
+                break;
+                
+            case FUNC_ACCEPT:
+                if (match(v, OPEN_PARENTHESIS)) {
+                    paren_depth++;
+                    current_arg = add_token(current_arg, strdup(tk.value), tk.type);
+                } 
+                else if (match(v, CLOSE_PARENTHESIS)) {
+                    paren_depth--;
+                    if (paren_depth > 0) {
+                        current_arg = add_token(current_arg, strdup(tk.value), tk.type);
+                    } else {
+                        state = FUNC_DONE;
+                    }
+                } 
+                else if (match(v, COMMA)) {
+                    if (paren_depth == 1) {
+                        state = FUNC_ARG;
+                    } else {
+                        current_arg = add_token(current_arg, strdup(tk.value), tk.type);
+                    }
+                } 
+                else if (match(v, IDENTIFIER) || match(v, UNARY_OPERATOR) || 
+                         match(v, OPERATOR) || match(v, LITERAL)) {
+                    current_arg = add_token(current_arg, strdup(tk.value), tk.type);
                 }
-            }
-            break;
-
-        case FUNC_DONE:
-            v->cur_parsing = 0;
-            return f;
-            break;
-
-        case FUNC_ERROR:
-            // TODO: free arguments in case of error.
-            v->cur_parsing = 0;
-            return NULL;
-            break;
+                else {
+                    state = FUNC_ERROR;
+                }
+                break;
+                
+            case FUNC_DONE:
+                v->cur_parsing = 0;
+                return f;
+                
+            case FUNC_ERROR:
+                printf("\nErro: Função inválida\n");
+                exit(1);
+                v->cur_parsing = 0;
+                if (f != NULL) {
+                    if (f->name != NULL) {
+                        free(f->name);
+                    }
+                    if (f->args != NULL) {
+                        for (int i = 0; i < f->num_args; i++) {
+                            free_token_vec(f->args[i]);
+                        }
+                        free(f->args);
+                    }
+                    free(f);
+                }
+                return NULL;
         }
     }
-
-    return NULL;
+    
+    if (state != FUNC_DONE) {
+        printf("\nErro: Função inválida\n");
+        exit(1);
+        if (f != NULL) {
+            free(f);
+        }
+        return NULL;
+    }
+    
+    return f;
 }

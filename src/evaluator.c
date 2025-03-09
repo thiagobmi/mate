@@ -192,6 +192,41 @@ eval_result evaluate_expression(node *n, dictionary *d)
 
                 return ev;
             }
+            else if (default_dict->entries[id_default].type == EXTERN_FUNCTION)
+            {
+                struct extern_function_info *ext =
+                    default_dict->entries[id_default].external_function;
+
+                if (fn->num_args != ext->num_args)
+                {
+                    result.error = true;
+                    result.value = 0.0;
+                    sprintf(result.error_msg,
+                            "Wrong number of arguments for %s", fn->name);
+                    return result;
+                }
+
+                double *arguments = malloc(sizeof(double) * ext->num_args);
+                for (int i = 0; i < ext->num_args; i++)
+                {
+                    eval_result res = evaluate_expression(fn->args[i], d);
+                    if (!res.error)
+                    {
+                        arguments[i] = res.value;
+                    }
+                    else
+                    {
+                        result.error = true;
+                        strcpy(result.error_msg, res.error_msg);
+                        result.value = 0.0;
+                        return result;
+                    }
+                }
+
+                double result = call_extern_function(ext, arguments);
+                free(arguments);
+                return (eval_result){result, false, 0, false, ""};
+            }
         }
     }
 
