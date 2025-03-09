@@ -180,12 +180,10 @@ eval_result evaluate_expression(node *n, dictionary *d)
                     }
                     else
                     {
-                        printf("dajsdhd\n");
-                        // result.error = true;
-                        printf("%s\n", res.error_msg);
-                        // strcpy(result.error_msg, res.error_msg);
-                        // result.value = 0.0;
-                        // return result;
+                        result.error = true;
+                        strcpy(result.error_msg, res.error_msg);
+                        result.value = 0.0;
+                        return result;
                     }
                 }
 
