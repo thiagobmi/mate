@@ -1,4 +1,5 @@
 #include "../include/evaluator.h"
+#include "../include/eval.h"
 #include "../include/parser.h"
 #include "../include/token.h"
 #include <ffi.h>
@@ -6,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 double token_to_number(token t) { return atof(t.value); }
 
@@ -37,6 +37,7 @@ double call_extern_function(struct extern_function_info *info,
 
 eval_result evaluate_expression(node *n, dictionary *d)
 {
+    dictionary *default_dict = get_default_dictionary();
     eval_result result = {0.0, false, false, 0, ""};
 
     if (n == NULL)
@@ -50,15 +51,16 @@ eval_result evaluate_expression(node *n, dictionary *d)
     {
         struct parsed_function_info *fn = n->function;
         int id = search_dict(d, fn->name);
+        int id_default = search_dict(default_dict, fn->name);
 
-        if (id == -1)
+        if (id == -1 && id_default == -1)
         {
             result.value = 0.0;
             result.error = true;
             sprintf(result.error_msg, "function '%s' doesn't exist", fn->name);
             return result;
         }
-        else
+        else if (id != -1)
         {
             if (d->entries[id].type != FUNCTION &&
                 d->entries[id].type != EXTERN_FUNCTION)
@@ -104,9 +106,6 @@ eval_result evaluate_expression(node *n, dictionary *d)
                 eval_result ev =
                     evaluate_expression(stored_func->ast, arg_dict);
 
-                if (ev.error && strlen(ev.error_msg) > 0)
-                    printf("\n Error: %s\n", ev.error_msg);
-
                 return ev;
             }
             else if (d->entries[id].type == EXTERN_FUNCTION)
@@ -142,7 +141,57 @@ eval_result evaluate_expression(node *n, dictionary *d)
 
                 double result = call_extern_function(ext, arguments);
                 free(arguments);
-                return (eval_result) {result,false,0,false,""};
+                return (eval_result){result, false, 0, false, ""};
+            }
+        }
+        else if (id_default != -1)
+        {
+            if (default_dict->entries[id_default].type != FUNCTION &&
+                default_dict->entries[id_default].type != EXTERN_FUNCTION)
+            {
+                result.error = true;
+                result.value = 0.0;
+                sprintf(result.error_msg, "'%s' is a variable, not a function",
+                        fn->name);
+                return result;
+            }
+            if (default_dict->entries[id_default].type == FUNCTION)
+            {
+                struct stored_function_info *stored_func =
+                    default_dict->entries[id_default].function;
+                dictionary *arg_dict = stored_func->args;
+
+                if (fn->num_args != stored_func->num_args)
+                {
+                    result.error = true;
+                    result.value = 0.0;
+                    sprintf(result.error_msg,
+                            "Wrong number of arguments for %s", fn->name);
+                    return result;
+                }
+
+                for (int i = 0; i < arg_dict->len; i++)
+                {
+                    eval_result res = evaluate_expression(fn->args[i], d);
+                    if (!res.error)
+                    {
+                        arg_dict->entries[i].value = res.value;
+                    }
+                    else
+                    {
+                        printf("dajsdhd\n");
+                        // result.error = true;
+                        printf("%s\n", res.error_msg);
+                        // strcpy(result.error_msg, res.error_msg);
+                        // result.value = 0.0;
+                        // return result;
+                    }
+                }
+
+                eval_result ev =
+                    evaluate_expression(stored_func->ast, arg_dict);
+
+                return ev;
             }
         }
     }
@@ -154,15 +203,21 @@ eval_result evaluate_expression(node *n, dictionary *d)
     }
     else if (n->type == IDENTIFIER_NODE)
     {
+        // For non function calls, the dict passed as argument and default are
+        // the same.
+        //  TODO: change this :/
+
         int id = search_dict(d, n->name);
-        if (id == -1)
+        int id_default = search_dict(default_dict, n->name);
+
+        if (id == -1 && id_default == -1)
         {
             result.error = true;
             result.value = 0.0;
             sprintf(result.error_msg, "'%s' doesn't exist", n->name);
             return result;
         }
-        else
+        else if (id != -1)
         {
             if (d->entries[id].type != VARIABLE)
             {
@@ -173,6 +228,19 @@ eval_result evaluate_expression(node *n, dictionary *d)
                 return result;
             }
             result.value = d->entries[id].value;
+            return result;
+        }
+        else if (id_default != -1)
+        {
+            if (default_dict->entries[id_default].type != VARIABLE)
+            {
+                result.error = true;
+                result.value = 0.0;
+                sprintf(result.error_msg, "'%s' is a function, not a variable",
+                        n->name);
+                return result;
+            }
+            result.value = default_dict->entries[id_default].value;
             return result;
         }
     }

@@ -21,9 +21,7 @@ dictionary *dictionary_add_function(dictionary *d, entry *et)
     int index = d->len;
 
     if (d->len >= d->max_size - 1)
-    {
         d = resize_dict(d, d->max_size * 2);
-    }
 
     int id = search_dict(d, et->key);
 
@@ -99,7 +97,7 @@ void free_entry(entry et)
         free(fn);
     }
     else if (et.type == EXTERN_FUNCTION)
-      free(et.external_function); 
+        free(et.external_function);
 }
 
 void free_dict(dictionary *d)

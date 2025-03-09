@@ -1,5 +1,6 @@
 #include "../include/parser.h"
 #include "../include/dictionary.h"
+#include "../include/eval.h"
 #include "../include/evaluator.h"
 #include "../include/tokenizer.h"
 #include <assert.h>
@@ -16,6 +17,7 @@ bool match(token_vec *v, token_type t)
     token tk = get_current_token(v);
     if (tk.type == t)
     {
+        // print_token(tk);
         v->cur_parsing++;
         return true;
     }
@@ -40,9 +42,13 @@ expression_info valid_expression(token_vec *v)
     bool is_function_declaration = false;
     bool can_be_assignment = true;
     bool is_function_call = false;
+    bool declared_function = false;
+    char *name_pointer = NULL;
+    char *function_name = NULL;
     enum expression_state state = EXPR_START;
     expression_info e;
     dictionary *d = new_dict(1);
+    dictionary *default_dict = get_default_dictionary();
 
     // TODO: Add support for nested functions in arguments;
     while (true)
@@ -91,7 +97,10 @@ expression_info valid_expression(token_vec *v)
         case EXPR_FUNCTION_PARENTHESIS:
             is_function_declaration =
                 vec_contains_assignment(v) && !assignment ? true : false;
-            is_function_call = !is_function_declaration;
+            is_function_call = (!is_function_declaration) || declared_function;
+            is_function_declaration = !is_function_call;
+            if (is_function_declaration)
+                function_name = name_pointer;
 
             if (match(v, IDENTIFIER))
             {
@@ -148,6 +157,7 @@ expression_info valid_expression(token_vec *v)
             {
                 if (is_function_declaration)
                 {
+                    declared_function = true;
                     state = EXPR_START;
                 }
                 else
@@ -170,16 +180,26 @@ expression_info valid_expression(token_vec *v)
                 if (is_function_declaration)
                 {
                     int result = search_dict(d, current_token.value);
-                    if (result == -1)
+                    int result_default =
+                        search_dict(default_dict, current_token.value);
+
+                    if (result == -1 && result_default == -1)
                     {
                         state = EXPR_ERROR;
                         continue;
                     }
                     else
+                    {
+                        if (strcmp(current_token.value, function_name) == 0)
+                            state = EXPR_ERROR;
                         state = EXPR_LITERAL_OR_IDENTIFIER;
+                    }
                 }
                 else
+                {
+                    name_pointer = current_token.value;
                     state = EXPR_LITERAL_OR_IDENTIFIER;
+                }
             }
             else if (match(v, LITERAL))
             {
@@ -280,13 +300,19 @@ expression_info valid_expression(token_vec *v)
                 if (is_function_declaration)
                 {
                     int result = search_dict(d, current_token.value);
-                    if (result == -1)
+                    int result_default =
+                        search_dict(default_dict, current_token.value);
+                    if (result == -1 && result_default == -1)
                     {
                         state = EXPR_ERROR;
                         continue;
                     }
                     else
+                    {
+                        if (strcmp(current_token.value, function_name) == 0)
+                            state = EXPR_ERROR;
                         state = EXPR_LITERAL_OR_IDENTIFIER;
+                    }
                 }
                 else
                     state = EXPR_LITERAL_OR_IDENTIFIER;
@@ -320,7 +346,8 @@ expression_info valid_expression(token_vec *v)
             v->cur_parsing = 0;
             e.is_valid = true;
             e.is_assignment = assignment;
-            e.is_function_declaration = is_function_declaration;
+            e.is_function_declaration =
+                is_function_declaration || declared_function;
             return e;
             break;
 
@@ -330,7 +357,8 @@ expression_info valid_expression(token_vec *v)
             e.error_at = v->cur_parsing;
             v->cur_parsing = 0;
             e.is_assignment = assignment;
-            e.is_function_declaration = is_function_declaration;
+            e.is_function_declaration =
+                is_function_declaration || declared_function;
             return e;
             break;
         }

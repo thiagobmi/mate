@@ -6,12 +6,12 @@
 #include "../include/tokenizer.h"
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include <math.h>
 
 struct termios orig_termios;
 
@@ -100,7 +100,7 @@ int start_calculator()
     printf("%% ");
     fflush(stdout);
 
-    dictionary *d = new_dict(10);
+    dictionary *d = get_default_dictionary();
     while (1)
     {
         char c;
@@ -323,6 +323,45 @@ int start_calculator()
     free_dict(d);
     return 0;
 }
+char *trimwhitespace(char *str)
+{
+    char *end;
+
+    while (isspace((unsigned char)*str))
+        str++;
+
+    if (*str == 0)
+        return str;
+
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end))
+        end--;
+
+    end[1] = '\0';
+
+    return str;
+}
+
+int count_tokens(const char *str, const char *delim)
+{
+    if (str == NULL)
+        return 0;
+
+    int count = 0;
+
+    while (*str)
+    {
+        str += strspn(str, delim);
+
+        if (*str)
+        {
+            count++;
+            str += strcspn(str, delim);
+        }
+    }
+
+    return count;
+}
 
 int main(int argc, char **argv)
 {
@@ -336,6 +375,7 @@ int main(int argc, char **argv)
 
     if (argc == 2)
     {
+        bool simple_output = (count_tokens(argv[1], ";") < 2);
         token = strtok(argv[1], ";");
         do
         {
@@ -349,16 +389,35 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    printf("Error at: %d\n", ex.error_at);
+                    printf("\nError at: %d\n", ex.error_at);
                 }
                 mate_cleanup();
                 return 1;
             }
             else if (!ex.is_assignment)
             {
-                printf("     ");
-                print_result(ex.value);
-                printf("\n");
+                if (!simple_output)
+                {
+                    printf("%-3s", "");
+                    char *trimmed = trimwhitespace(token);
+                    printf("%s ", trimmed);
+                    int padding = 10 - strlen(trimmed);
+                    if (padding < 0)
+                        padding = 1;
+                    for (int i = 0; i < padding; i++)
+                    {
+                        printf(" ");
+                    }
+                    printf("= ");
+                    print_result(ex.value);
+                    printf("\n");
+                }
+                else
+                {
+                    printf("%-5s", "");
+                    print_result(ex.value);
+                    printf("\n");
+                }
             }
         } while ((token = strtok(NULL, ";")));
         mate_cleanup();
