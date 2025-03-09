@@ -64,7 +64,9 @@ eval_result eval(const char *expression)
     if (e.is_function_declaration)
     {
         entry *et = parse_function_declaration(v);
-        if(et == NULL) exit(1);
+        if (et == NULL)
+            exit(1);
+
         dict = dictionary_add_function(dict, et);
         free(et);
         free_token_vec(v);

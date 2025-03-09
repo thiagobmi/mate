@@ -237,7 +237,8 @@ token_vec *tokenize(const char *s)
         }
         else if (can_be_unary(a) &&
                  (tp == OPERATOR || tp == UNDEFINED || tp == UNARY_OPERATOR ||
-                  tp == OPEN_PARENTHESIS || tp == ASSIGNMENT_OPERATOR))
+                  tp == OPEN_PARENTHESIS || tp == ASSIGNMENT_OPERATOR ||
+                  tp == COMMA))
         {
             if (buffer_len > 0)
             {

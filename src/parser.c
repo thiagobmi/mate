@@ -187,7 +187,8 @@ expression_info valid_expression(token_vec *v)
             }
             else
             {
-                if (is_function_call){
+                if (is_function_call)
+                {
                     state = EXPR_LITERAL_OR_IDENTIFIER;
                 }
                 else
@@ -361,7 +362,7 @@ expression_info valid_expression(token_vec *v)
             break;
 
         case EXPR_PARENTHESIS:
-            if (match(v, IDENTIFIER) || match(v, LITERAL) || 
+            if (match(v, IDENTIFIER) || match(v, LITERAL) ||
                 match(v, OPEN_PARENTHESIS) || match(v, UNARY_OPERATOR))
             {
                 v->cur_parsing--;
@@ -375,21 +376,24 @@ expression_info valid_expression(token_vec *v)
             break;
 
         case EXPR_DONE:
-            if (count_brackets != 0 || function_paren_depth != 0) {
+            if (count_brackets != 0 || function_paren_depth != 0)
+            {
                 free_dict(d);
                 e.is_valid = false;
                 e.error_at = v->cur_parsing;
                 v->cur_parsing = 0;
                 e.is_assignment = assignment;
-                e.is_function_declaration = is_function_declaration || declared_function;
+                e.is_function_declaration =
+                    is_function_declaration || declared_function;
                 return e;
             }
-            
+
             free_dict(d);
             v->cur_parsing = 0;
             e.is_valid = true;
             e.is_assignment = assignment;
-            e.is_function_declaration = is_function_declaration || declared_function;
+            e.is_function_declaration =
+                is_function_declaration || declared_function;
             return e;
             break;
 
@@ -399,7 +403,8 @@ expression_info valid_expression(token_vec *v)
             e.error_at = v->cur_parsing;
             v->cur_parsing = 0;
             e.is_assignment = assignment;
-            e.is_function_declaration = is_function_declaration || declared_function;
+            e.is_function_declaration =
+                is_function_declaration || declared_function;
             return e;
             break;
         }
@@ -546,7 +551,7 @@ entry *parse_function_declaration(token_vec *v)
     entry *et = malloc(sizeof(entry));
     struct stored_function_info *func =
         malloc(sizeof(struct stored_function_info));
-    
+
     node *root = compute_expression(e);
     free_token_vec(e);
 
@@ -593,7 +598,8 @@ node *parse_factor(token_vec *v)
     {
         token_vec *func = get_function(v);
         struct function_info *f = get_function_arguments(func);
-        if(f == NULL) {
+        if (f == NULL)
+        {
             printf("\nErro: Função inválida\n");
             exit(1);
         }
@@ -667,119 +673,150 @@ node *parse_factor(token_vec *v)
     return n;
 }
 
-struct function_info *get_function_arguments(token_vec *v) {
+struct function_info *get_function_arguments(token_vec *v)
+{
     enum func_state state = FUNC_START;
     int paren_depth = 0;
-    
+
     struct function_info *f = malloc(sizeof(struct function_info));
     f->args = NULL;
     f->num_args = 0;
     token_vec *current_arg = NULL;
-    
-    while (v->cur_parsing < v->len) {
+
+    while (v->cur_parsing < v->len)
+    {
         token tk = get_current_token(v);
-        
-        switch (state) {
-            case FUNC_START:
-                if (match(v, IDENTIFIER)) {
-                    f->name = strdup(tk.value);
-                    state = FUNC_NAME;
-                    continue;
-                } else {
-                    state = FUNC_ERROR;
-                }
-                break;
-                
-            case FUNC_NAME:
-                if (match(v, OPEN_PARENTHESIS)) {
-                    paren_depth = 1;
-                    state = FUNC_PAREN;
-                } else {
-                    state = FUNC_ERROR;
-                }
-                break;
-                
-            case FUNC_PAREN:
-                if (match(v, CLOSE_PARENTHESIS)) {
-                    paren_depth--;
-                    v->cur_parsing = 0;
-                    state = FUNC_DONE;
-                } else {
-                    state = FUNC_ARG;
-                    continue;
-                }
-                break;
-                
-            case FUNC_ARG:
-                current_arg = new_token_vec(1);
-                f->num_args++;
-                f->args = realloc(f->args, sizeof(token_vec *) * f->num_args);
-                f->args[f->num_args - 1] = current_arg;
-                state = FUNC_ACCEPT;
+
+        switch (state)
+        {
+        case FUNC_START:
+            if (match(v, IDENTIFIER))
+            {
+                f->name = strdup(tk.value);
+                state = FUNC_NAME;
                 continue;
-                break;
-                
-            case FUNC_ACCEPT:
-                if (match(v, OPEN_PARENTHESIS)) {
-                    paren_depth++;
-                    current_arg = add_token(current_arg, strdup(tk.value), tk.type);
-                } 
-                else if (match(v, CLOSE_PARENTHESIS)) {
-                    paren_depth--;
-                    if (paren_depth > 0) {
-                        current_arg = add_token(current_arg, strdup(tk.value), tk.type);
-                    } else {
-                        state = FUNC_DONE;
-                    }
-                } 
-                else if (match(v, COMMA)) {
-                    if (paren_depth == 1) {
-                        state = FUNC_ARG;
-                    } else {
-                        current_arg = add_token(current_arg, strdup(tk.value), tk.type);
-                    }
-                } 
-                else if (match(v, IDENTIFIER) || match(v, UNARY_OPERATOR) || 
-                         match(v, OPERATOR) || match(v, LITERAL)) {
-                    current_arg = add_token(current_arg, strdup(tk.value), tk.type);
-                }
-                else {
-                    state = FUNC_ERROR;
-                }
-                break;
-                
-            case FUNC_DONE:
+            }
+            else
+            {
+                state = FUNC_ERROR;
+            }
+            break;
+
+        case FUNC_NAME:
+            if (match(v, OPEN_PARENTHESIS))
+            {
+                paren_depth = 1;
+                state = FUNC_PAREN;
+            }
+            else
+            {
+                state = FUNC_ERROR;
+            }
+            break;
+
+        case FUNC_PAREN:
+            if (match(v, CLOSE_PARENTHESIS))
+            {
+                paren_depth--;
                 v->cur_parsing = 0;
-                return f;
-                
-            case FUNC_ERROR:
-                printf("\nErro: Função inválida\n");
-                exit(1);
-                v->cur_parsing = 0;
-                if (f != NULL) {
-                    if (f->name != NULL) {
-                        free(f->name);
-                    }
-                    if (f->args != NULL) {
-                        for (int i = 0; i < f->num_args; i++) {
-                            free_token_vec(f->args[i]);
-                        }
-                        free(f->args);
-                    }
-                    free(f);
+                state = FUNC_DONE;
+            }
+            else
+            {
+                state = FUNC_ARG;
+                continue;
+            }
+            break;
+
+        case FUNC_ARG:
+            current_arg = new_token_vec(1);
+            f->num_args++;
+            f->args = realloc(f->args, sizeof(token_vec *) * f->num_args);
+            f->args[f->num_args - 1] = current_arg;
+            state = FUNC_ACCEPT;
+            continue;
+            break;
+
+        case FUNC_ACCEPT:
+            if (match(v, OPEN_PARENTHESIS))
+            {
+                paren_depth++;
+                current_arg = add_token(current_arg, strdup(tk.value), tk.type);
+            }
+            else if (match(v, CLOSE_PARENTHESIS))
+            {
+                paren_depth--;
+                if (paren_depth > 0)
+                {
+                    current_arg =
+                        add_token(current_arg, strdup(tk.value), tk.type);
                 }
-                return NULL;
+                else
+                {
+                    state = FUNC_DONE;
+                }
+            }
+            else if (match(v, COMMA))
+            {
+                if (paren_depth == 1)
+                {
+                    state = FUNC_ARG;
+                }
+                else
+                {
+                    current_arg =
+                        add_token(current_arg, strdup(tk.value), tk.type);
+                }
+            }
+            else if (match(v, IDENTIFIER) || match(v, UNARY_OPERATOR) ||
+                     match(v, OPERATOR) || match(v, LITERAL))
+            {
+                current_arg = add_token(current_arg, strdup(tk.value), tk.type);
+            }
+            else
+            {
+                state = FUNC_ERROR;
+            }
+            break;
+
+        case FUNC_DONE:
+            v->cur_parsing = 0;
+            return f;
+
+        case FUNC_ERROR:
+            printf("\nErro: Função inválida\n");
+            exit(1);
+            v->cur_parsing = 0;
+            if (f != NULL)
+            {
+                if (f->name != NULL)
+                {
+                    free(f->name);
+                }
+                if (f->args != NULL)
+                {
+                    for (int i = 0; i < f->num_args; i++)
+                    {
+                        free_token_vec(f->args[i]);
+                    }
+                    free(f->args);
+                }
+                free(f);
+            }
+            return NULL;
         }
     }
-    
-    if (state != FUNC_DONE) {
+
+    if (state != FUNC_DONE)
+    {
         printf("\nErro: Função inválida\n");
         exit(1);
-        if (f != NULL) {
+        if (f != NULL)
+        {
             free(f);
         }
         return NULL;
     }
-    
+
     return f;
 }

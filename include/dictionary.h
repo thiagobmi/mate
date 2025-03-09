@@ -10,8 +10,8 @@ typedef enum entry_type
 
 struct extern_function_info
 {
-  int num_args;
-  void *function;
+    int num_args;
+    void *function;
 };
 
 typedef struct entry
@@ -29,7 +29,6 @@ typedef struct dict
     int len;
     entry *entries;
 } dictionary;
-
 
 void free_entry(entry et);
 dictionary *dictionary_add_function(dictionary *d, entry *et);

@@ -16,7 +16,8 @@ typedef struct
     char error_msg[MAX_INPUT_SIZE];
 } eval_result;
 
-double call_extern_function(struct extern_function_info *info, const double *args);
+double call_extern_function(struct extern_function_info *info,
+                            const double *args);
 eval_result evaluate_expression(node *n, dictionary *d);
 double token_to_number(token t);
 

@@ -45,7 +45,6 @@ struct stored_function_info
     node *ast;
 };
 
-
 struct function_info *get_function_arguments(token_vec *v);
 
 entry *parse_function_declaration(token_vec *v);

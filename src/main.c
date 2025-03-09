@@ -13,6 +13,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#define MAX_LINE_LENGTH 1024
 struct termios orig_termios;
 
 void disableRawMode() { tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); }
@@ -363,15 +364,43 @@ int count_tokens(const char *str, const char *delim)
     return count;
 }
 
+bool load_mateconfig(char *filename)
+{
+    FILE *file;
+    char line[MAX_LINE_LENGTH];
+
+    file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        printf("Error opening file\n");
+        return 1;
+    }
+
+    while (fgets(line, MAX_LINE_LENGTH, file) != NULL)
+    {
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] == '\n')
+        {
+            line[len - 1] = '\0';
+        }
+
+        /*eval_result ex =*/eval(line);
+    }
+
+    fclose(file);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
-
     // run_tests();
 
     char *token;
     add_function("sin", sin, 1);
     add_function("cos", cos, 1);
     add_function("tan", tan, 1);
+
+    load_mateconfig(".mateconfig");
 
     if (argc == 2)
     {
