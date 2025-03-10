@@ -12,6 +12,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #define MAX_LINE_LENGTH 1024
 struct termios orig_termios;
@@ -391,41 +392,62 @@ bool load_mateconfig(char *filename)
     return 0;
 }
 
+void print_usage(char *program_name) {
+    printf("Uso: %s [opções] [expressão]\n", program_name);
+    printf("Opções:\n");
+    printf("  -c, --config ARQUIVO    Usa ARQUIVO como configuração (padrão: .mateconfig)\n");
+    printf("  -s, --simple-print      Força o modo de impressão simplificada para todas as expressões\n");
+    printf("  -h, --help              Mostra esta mensagem de ajuda\n");
+    printf("\n");
+}
+
 int main(int argc, char **argv)
 {
     // run_tests();
-
+    
     char *token;
+    char *config_file = ".mateconfig";  
+    bool force_simple_output = false;  
+    int c;
+    
+    static struct option long_options[] = {
+        {"config", required_argument, 0, 'c'},
+        {"simple-print", no_argument, 0, 's'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}
+    };
+    
+    while ((c = getopt_long(argc, argv, "c:sh", long_options, NULL)) != -1) {
+        switch (c) {
+            case 'c':
+                config_file = optarg;
+                break;
+            case 's':
+                force_simple_output = true;
+                break;
+            case 'h':
+                print_usage(argv[0]);
+                return 0;
+            case '?':
+                return 1;
+            default:
+                abort();
+        }
+    }
+    
     add_function("sin", sin, 1);
     add_function("cos", cos, 1);
     add_function("tan", tan, 1);
 
-    char *config_file = ".mateconfig";
-    
-    // Processamento de argumentos
-    if (argc > 1) {
-        if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "--config") == 0) {
-            if (argc > 2) {
-                config_file = argv[2];
-                argc -= 2;
-                argv += 2;
-            } else {
-                printf("Erro: Nome do arquivo de configuração não fornecido após %s\n", argv[1]);
-                return 1;
-            }
-        }
-    }
-
     load_mateconfig(config_file);
-
-    if (argc == 2)
+    
+    if (optind < argc) 
     {
-        bool simple_output = (count_tokens(argv[1], ";") < 2);
-        token = strtok(argv[1], ";");
-        do
-        {
+        bool simple_output = force_simple_output || (count_tokens(argv[optind], ";") < 2);
+        token = strtok(argv[optind], ";");
+        do {
             eval_result ex = eval(token);
-
+            
             if (ex.error)
             {
                 if (strlen(ex.error_msg) > 0)
@@ -467,18 +489,11 @@ int main(int argc, char **argv)
         } while ((token = strtok(NULL, ";")));
         mate_cleanup();
     }
-    else if (argc > 2)
-    {
-        printf("\t Usage: %s [opcoes] <expr>\n", argv[0]);
-        printf("\t   ou: %s [opcoes]\n", argv[0]);
-        printf("\n");
-        printf("\t Opcoes:\n");
-        printf("\t   -c, --config ARQUIVO   Usar ARQUIVO como configuração (padrão: .mateconfig)\n");
-        return 1;
-    }
-    else
+    else 
     {
         start_calculator();
     }
+    
     return 0;
 }
+
