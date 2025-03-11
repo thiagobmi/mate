@@ -373,7 +373,7 @@ bool load_mateconfig(char *filename)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        printf("Error opening file\n");
+        printf("Error opening file %s\n",filename);
         return 1;
     }
 
@@ -385,7 +385,15 @@ bool load_mateconfig(char *filename)
             line[len - 1] = '\0';
         }
 
-        /*eval_result ex =*/eval(line);
+        eval_result ex = eval(line);
+
+        if(ex.error)
+        {
+         // printf("%s\n",line);
+          /*printf("Error loading %s\n",filename);*/
+        }
+        
+        
     }
 
     fclose(file);
