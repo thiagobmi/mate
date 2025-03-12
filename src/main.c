@@ -401,7 +401,10 @@ bool load_mateconfig(char *filename)
 
 void print_usage(char *program_name)
 {
+    printf("\n");
+    printf("MATE (Mathematical Analysis Tool and Evaluator)\n");
     printf("Uso: %s [opções] [expressão]\n", program_name);
+    printf("     %s [opções]\n", program_name);
     printf("Opções:\n");
     printf("  -c, --config ARQUIVO    Usa ARQUIVO como configuração (padrão: "
            ".mateconfig)\n");
