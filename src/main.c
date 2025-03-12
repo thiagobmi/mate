@@ -2,17 +2,18 @@
 #include "../include/dictionary.h"
 #include "../include/eval.h"
 #include "../include/evaluator.h"
+#include "../include/extern.h"
 #include "../include/parser.h"
 #include "../include/tokenizer.h"
 #include <assert.h>
 #include <ctype.h>
+#include <getopt.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include <getopt.h>
 
 #define MAX_LINE_LENGTH 1024
 struct termios orig_termios;
@@ -373,7 +374,7 @@ bool load_mateconfig(char *filename)
     file = fopen(filename, "r");
     if (file == NULL)
     {
-        printf("Error opening file %s\n",filename);
+        printf("Error opening file %s\n", filename);
         return 1;
     }
 
@@ -387,24 +388,25 @@ bool load_mateconfig(char *filename)
 
         eval_result ex = eval(line);
 
-        if(ex.error)
+        if (ex.error)
         {
-         // printf("%s\n",line);
-          /*printf("Error loading %s\n",filename);*/
+            // printf("%s\n",line);
+            /*printf("Error loading %s\n",filename);*/
         }
-        
-        
     }
 
     fclose(file);
     return 0;
 }
 
-void print_usage(char *program_name) {
+void print_usage(char *program_name)
+{
     printf("Uso: %s [opções] [expressão]\n", program_name);
     printf("Opções:\n");
-    printf("  -c, --config ARQUIVO    Usa ARQUIVO como configuração (padrão: .mateconfig)\n");
-    printf("  -s, --simple-print      Força o modo de impressão simplificada para todas as expressões\n");
+    printf("  -c, --config ARQUIVO    Usa ARQUIVO como configuração (padrão: "
+           ".mateconfig)\n");
+    printf("  -s, --simple-print      Força o modo de impressão simplificada "
+           "para todas as expressões\n");
     printf("  -h, --help              Mostra esta mensagem de ajuda\n");
     printf("\n");
 }
@@ -412,50 +414,50 @@ void print_usage(char *program_name) {
 int main(int argc, char **argv)
 {
     // run_tests();
-    
+
     char *token;
-    char *config_file = ".mateconfig";  
-    bool force_simple_output = false;  
+    char *config_file = ".mateconfig";
+    bool force_simple_output = false;
     int c;
-    
+
     static struct option long_options[] = {
         {"config", required_argument, 0, 'c'},
         {"simple-print", no_argument, 0, 's'},
         {"help", no_argument, 0, 'h'},
-        {0, 0, 0, 0}
-    };
-    
-    while ((c = getopt_long(argc, argv, "c:sh", long_options, NULL)) != -1) {
-        switch (c) {
-            case 'c':
-                config_file = optarg;
-                break;
-            case 's':
-                force_simple_output = true;
-                break;
-            case 'h':
-                print_usage(argv[0]);
-                return 0;
-            case '?':
-                return 1;
-            default:
-                abort();
+        {0, 0, 0, 0}};
+
+    while ((c = getopt_long(argc, argv, "c:sh", long_options, NULL)) != -1)
+    {
+        switch (c)
+        {
+        case 'c':
+            config_file = optarg;
+            break;
+        case 's':
+            force_simple_output = true;
+            break;
+        case 'h':
+            print_usage(argv[0]);
+            return 0;
+        case '?':
+            return 1;
+        default:
+            abort();
         }
     }
-    
-    add_function("sin", sin, 1);
-    add_function("cos", cos, 1);
-    add_function("tan", tan, 1);
 
+    add_extern_functions();
     load_mateconfig(config_file);
-    
-    if (optind < argc) 
+
+    if (optind < argc)
     {
-        bool simple_output = force_simple_output || (count_tokens(argv[optind], ";") < 2);
+        bool simple_output =
+            force_simple_output || (count_tokens(argv[optind], ";") < 2);
         token = strtok(argv[optind], ";");
-        do {
+        do
+        {
             eval_result ex = eval(token);
-            
+
             if (ex.error)
             {
                 if (strlen(ex.error_msg) > 0)
@@ -497,11 +499,10 @@ int main(int argc, char **argv)
         } while ((token = strtok(NULL, ";")));
         mate_cleanup();
     }
-    else 
+    else
     {
         start_calculator();
     }
-    
+
     return 0;
 }
-

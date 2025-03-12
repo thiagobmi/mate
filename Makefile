@@ -4,7 +4,7 @@ LDFLAGS = -lm -lffi
 
 SRC_DIR = src
 BUILD_DIR = build
-SRCS = $(addprefix $(SRC_DIR)/, main.c node.c token.c dictionary.c tokenizer.c parser.c evaluator.c eval.c test.c)
+SRCS = $(addprefix $(SRC_DIR)/, main.c node.c token.c dictionary.c tokenizer.c parser.c evaluator.c eval.c test.c extern.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 TARGET = mate
 
