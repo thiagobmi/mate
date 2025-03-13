@@ -28,7 +28,6 @@ operator_info operators[] = {
     {"-", 110, false,
      true}, // Unary minus (higher precedence than binary operators)
     {"!", 110, false, true}, // Logical NOT
-    {"~", 110, false, true}, // Bitwise NOT
 };
 const int NUM_OPERATORS = sizeof(operators) / sizeof(operator_info);
 
@@ -214,8 +213,7 @@ token_vec *tokenize(const char *s)
                 buffer_len = 0;
             }
         }
-        else if (is_operator(a) && i + 1 < s_len &&
-                 is_multi_char_operator(s[i], s[i + 1]))
+        else if (i + 1 < s_len && is_multi_char_operator(s[i], s[i + 1]))
         {
             if (buffer_len > 0)
             {
