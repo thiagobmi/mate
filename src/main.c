@@ -30,20 +30,11 @@ void enableRawMode()
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
-// typedef struct entry
-//{
-//     char *key;
-//     double value;
-//     entry_type type;
-//     struct stored_function_info *function;
-//     struct extern_function_info *external_function;
-// } entry;
-
 void print_function(entry et)
 {
     if (et.type == FUNCTION)
     {
-        printf(" %s(", et.key);
+        printf("\t%s(", et.key);
 
         struct stored_function_info *fn = et.function;
         for (int i = 0; i < et.function->num_args; i++)
@@ -57,7 +48,7 @@ void print_function(entry et)
     }
     else if (et.type == EXTERN_FUNCTION)
     {
-        printf(" %s({%d}) EXTERNAL\n", et.key, et.external_function->num_args);
+        printf("\t%s({%d}) EXTERNAL\n", et.key, et.external_function->num_args);
     }
 }
 void print_functions(dictionary *d)
@@ -95,7 +86,7 @@ void print_variables(dictionary *d)
         if (ent.type == VARIABLE)
         {
 
-            printf(" %s = ", ent.key);
+            printf("\t%s = ", ent.key);
             print_result(ent.value);
             printf("\n");
         }
