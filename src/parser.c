@@ -553,11 +553,12 @@ entry *parse_function_declaration(token_vec *v)
         malloc(sizeof(struct stored_function_info));
 
     node *root = compute_expression(e);
-    free_token_vec(e);
+    // free_token_vec(e);
 
     func->args = d;
     func->num_args = count_args;
     func->ast = root;
+    func->expr = e;
 
     et->type = FUNCTION;
     et->key = name;

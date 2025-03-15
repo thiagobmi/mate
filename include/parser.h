@@ -43,6 +43,7 @@ struct stored_function_info
     dictionary *args;
     int num_args;
     node *ast;
+    token_vec *expr;
 };
 
 struct function_info *get_function_arguments(token_vec *v);

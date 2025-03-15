@@ -30,17 +30,44 @@ void enableRawMode()
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
-void redrawLine(const char *buffer, int cursor_pos)
-{
-    printf("\r%% %s", buffer);
-    printf("\x1b[K");
+// typedef struct entry
+//{
+//     char *key;
+//     double value;
+//     entry_type type;
+//     struct stored_function_info *function;
+//     struct extern_function_info *external_function;
+// } entry;
 
-    printf("\r%% ");
-    for (int i = 0; i < cursor_pos; i++)
+void print_function(entry et)
+{
+    if (et.type == FUNCTION)
     {
-        printf("\x1b[C");
+        printf(" %s(", et.key);
+
+        struct stored_function_info *fn = et.function;
+        for (int i = 0; i < et.function->num_args; i++)
+        {
+            printf("%s%s", fn->args->entries[i].key,
+                   i == fn->num_args - 1 ? "" : ",");
+        }
+        printf(") = ");
+        print_expression(fn->expr);
+        printf("\n");
     }
-    fflush(stdout);
+    else if (et.type == EXTERN_FUNCTION)
+    {
+        printf(" %s({%d}) EXTERNAL\n", et.key, et.external_function->num_args);
+    }
+}
+void print_functions(dictionary *d)
+{
+    for (int i = 0; i < d->len; i++)
+    {
+        entry ent = d->entries[i];
+        if (ent.type == FUNCTION || ent.type == EXTERN_FUNCTION)
+            print_function(ent);
+    }
 }
 
 void print_result(double result)
@@ -58,6 +85,34 @@ void print_result(double result)
 
     for (int i = 0; i <= index; i++)
         printf("%c", str[i]);
+}
+
+void print_variables(dictionary *d)
+{
+    for (int i = 0; i < d->len; i++)
+    {
+        entry ent = d->entries[i];
+        if (ent.type == VARIABLE)
+        {
+
+            printf(" %s = ", ent.key);
+            print_result(ent.value);
+            printf("\n");
+        }
+    }
+}
+
+void redrawLine(const char *buffer, int cursor_pos)
+{
+    printf("\r%% %s", buffer);
+    printf("\x1b[K");
+
+    printf("\r%% ");
+    for (int i = 0; i < cursor_pos; i++)
+    {
+        printf("\x1b[C");
+    }
+    fflush(stdout);
 }
 
 char **history_alloc(int num)
@@ -242,6 +297,25 @@ int start_calculator()
                 {
                     strcpy(history[history_pos++], buffer);
                     history_cursor = history_pos;
+                }
+
+                if (strcmp(buffer, "functions") == 0)
+                {
+                    printf("\n");
+                    print_functions(d);
+                    buffer[0] = '\0';
+                    cursor_pos = 0;
+                    redrawLine(buffer, cursor_pos);
+                    continue;
+                }
+                if (strcmp(buffer, "variables") == 0)
+                {
+                    printf("\n");
+                    print_variables(d);
+                    buffer[0] = '\0';
+                    cursor_pos = 0;
+                    redrawLine(buffer, cursor_pos);
+                    continue;
                 }
 
                 token_vec *v = tokenize(buffer);
