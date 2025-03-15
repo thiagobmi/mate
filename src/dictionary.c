@@ -94,8 +94,8 @@ void free_entry(entry et)
         struct stored_function_info *fn = et.function;
         free_dict(fn->args);
         free_tree(fn->ast);
-        free(fn);
         free_token_vec(fn->expr);
+        free(fn);
     }
     else if (et.type == EXTERN_FUNCTION)
         free(et.external_function);
