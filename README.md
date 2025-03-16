@@ -42,7 +42,7 @@ Simply run the binary without arguments to enter interactive mode:
 ./mate
 ```
 
-This launches MATE's interactive shell, similar to GNU calc. In this mode, you can:
+This launches MATE's interactive shell. In this mode, you can:
 - Enter expressions continuously
 - Navigate expression history using `UP` and `DOWN` keys
 - View all defined functions by typing `functions`
