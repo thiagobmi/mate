@@ -5,7 +5,8 @@
         <a href="#overview">Overview</a> &#183;
         <a href="#usage-as-a-terminal-application">CLI Usage</a> &#183;
         <a href="#usage-as-a-c-library">Library Usage</a> &#183;
-        <a href="#how-it-works">How it works</a>
+        <a href="#how-it-works">How it works</a> &#183;
+        <a href="#grammar">Grammar</a>
     </p>
 </p>
 
@@ -137,3 +138,36 @@ For functions, the following steps occur:
 - **Variable Storage:** Variables and their relationships are stored in memory.
 - **Function Execution:** When the function is called, the AST is evaluated using the provided arguments as parameters.
 
+## Grammar
+
+```
+<program>   =    <statement> {";" <statement>}
+<statement> =    <assignment> | <expr>
+<assignment> =   <variable> "=" <expr>
+              |  <function-def>
+
+<function-def> = <identifier> "(" [<parameter-list>] ")" "=" <expr>
+<parameter-list> = <identifier> {"," <identifier>}
+<expr>      =    <logical_or> {"=" <logical_or>}
+<logical_or> =   <logical_and> {"||" <logical_and>}
+<logical_and> =  <bitwise_and> {"&&" <bitwise_and>}
+<bitwise_and> =  <equality> {"&" <equality>}
+<equality>  =    <relational> {("==" | "!=") <relational>}
+<relational> =   <additive> {("<" | ">" | "<=" | ">=") <additive>}
+<additive>  =    <term> {("+" | "-") <term>}
+<term>      =    <factor> {("*" | "/" | "%") <factor>}
+<factor>    =    <power> {"^" <power>}
+<power>     =    {("-" | "+")} <base>
+<base>      =    <number>
+              |  <variable>
+              |  <function-call>
+              |  "(" <expr> ")"
+
+<function-call> = <identifier> "(" [<expr-list>] ")"
+<expr-list> =    <expr> {"," <expr>}
+<variable>  =    <identifier>
+<identifier> =   <letter> {<letter> | <digit> | "_"}
+<number>    =    <digit> {<digit>} ["." {<digit>}] [("e" | "E") ["+" | "-"] <digit> {<digit>}]
+<letter>    =    "a" | ... | "z" | "A" | ... | "Z"
+<digit>     =    "0" | ... | "9"
+```
