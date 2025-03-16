@@ -21,7 +21,7 @@ It supports variables, functions, and complex mathematical expressions with a sy
 
 ```c
 eval("2+2");                                 // Returns: 4
-eval("cone_volume(r,h) = (1/3)*PI*r^2*h");  // Defines a function
+eval("cone_volume(r,h) = (1/3)*PI*r^2*h");   // Defines a function
 eval("cone_volume(10,5)");                   // Returns: 523.59877559833330
 ```
 
