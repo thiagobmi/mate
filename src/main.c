@@ -299,7 +299,7 @@ int start_calculator()
                     redrawLine(buffer, cursor_pos);
                     continue;
                 }
-                if (strcmp(buffer, "variables") == 0)
+                else if (strcmp(buffer, "variables") == 0)
                 {
                     printf("\n");
                     print_variables(d);
@@ -307,6 +307,41 @@ int start_calculator()
                     cursor_pos = 0;
                     redrawLine(buffer, cursor_pos);
                     continue;
+                }
+                else if (strncmp(buffer, "showtree", 8) == 0)
+                {
+                    char *token = strtok(buffer, " ");
+                    token = strtok(NULL, " ");
+
+                    if (token != NULL)
+                    {
+                        int id = search_dict(d, token);
+                        if (id != -1 && d->entries[id].type == FUNCTION)
+                        {
+                            printf("\n");
+                            pretty_print_AST(d->entries[id].function->ast);
+                        }
+                        else
+                        {
+                            printf(
+                                " Error: %s not found or is not a function\n",
+                                token);
+                        }
+                        memset(buffer, 0, BUFFER_SIZE);
+                        cursor_pos = 0;
+                        buffer_len = 0;
+                        redrawLine(buffer, cursor_pos);
+                        continue;
+                    }
+                    else
+                    {
+                        memset(buffer, 0, BUFFER_SIZE);
+                        cursor_pos = 0;
+                        buffer_len = 0;
+                        redrawLine(buffer, cursor_pos);
+                        printf("\n Missing second word.\n");
+                        continue;
+                    }
                 }
 
                 token_vec *v = tokenize(buffer);
@@ -490,7 +525,7 @@ int main(int argc, char **argv)
 
     static struct option long_options[] = {
         {"config", required_argument, 0, 'c'},
-        {"simple-print", no_argument, 0, 's'},
+        {"simple-output", no_argument, 0, 's'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}};
 
